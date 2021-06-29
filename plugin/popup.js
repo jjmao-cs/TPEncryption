@@ -55,30 +55,31 @@ function setServer() {
     let value = document.getElementById('SELECT_SERVER').options[document.getElementById('SELECT_SERVER').selectedIndex].value,
      selected_server = document.getElementById('selected_server'),
      selected_server2 = document.getElementById('selected_server2');
-    
-    document.getElementById("password").disabled = true;
-    document.getElementById('password').value = '';
-    document.getElementById("password2").disabled = true;
-    document.getElementById('password2').value = '';
-    // console.log(1)
+     // console.log(1)
     
     if (value === 'None') {
         selected_server.innerHTML = 'None';
         selected_server2.innerHTML = 'None';
+        claerPassword();
+        disablePassword();
         server = undefined
     } else if (value === 'Imgur') {
         selected_server.innerHTML = 'Imgur (Anonymous)';
         selected_server2.innerHTML = 'Imgur (Anonymous)';
-        document.getElementById("password").disabled = false;
-        document.getElementById("password2").disabled = false;
+        claerPassword();
+        enablePassword();
         server = 'imgur'
     } else if (value === 'Google') {
         selected_server.innerHTML = 'Google Photo';
-        selected_server2.innerHTML = 'Google Photo';
+        selected_server2.innerHTML = 'Google Photo'
+        claerPassword();
+        enablePassword();
         server = 'google'
     } else {
         selected_server.innerHTML = 'Error';
         selected_server2.innerHTML = 'Error';
+        claerPassword();
+        disablePassword();
     }
     document.getElementById('SELECT_SERVER2').selectedIndex = document.getElementById('SELECT_SERVER').selectedIndex;
 }
@@ -87,30 +88,31 @@ function setServer2() {
     let value2 = document.getElementById('SELECT_SERVER2').options[document.getElementById('SELECT_SERVER2').selectedIndex].value,
      selected_server = document.getElementById('selected_server'),
      selected_server2 = document.getElementById('selected_server2');
-    
-    document.getElementById("password").disabled = true;
-    document.getElementById('password').value = '';
-    document.getElementById("password2").disabled = true;
-    document.getElementById('password2').value = '';
     // console.log(2)
 
     if (value2 === 'None') {
         selected_server.innerHTML = 'None';
         selected_server2.innerHTML = 'None';
+        claerPassword();
+        disablePassword();
         server = undefined
     } else if (value2 === 'Imgur') {
         selected_server.innerHTML = 'Imgur (Anonymous)';
         selected_server2.innerHTML = 'Imgur (Anonymous)';
-        document.getElementById("password").disabled = false;
-        document.getElementById("password2").disabled = false;
+        claerPassword();
+        enablePassword();
         server = 'imgur'
     } else if (value2 === 'Google') {
         selected_server.innerHTML = 'Google Photo';
         selected_server2.innerHTML = 'Google Photo';
+        claerPassword();
+        enablePassword();
         server = 'google'
     } else {
         selected_server.innerHTML = 'Error';
         selected_server2.innerHTML = 'Error';
+        claerPassword();
+        disablePassword();
     }
     document.getElementById('SELECT_SERVER').selectedIndex = document.getElementById('SELECT_SERVER2').selectedIndex;
 }
@@ -215,6 +217,12 @@ var enablePassword = function (){
 var disablePassword = function (){
     document.getElementById('password').disabled = true
     document.getElementById('password2').disabled = true
+}
+
+
+var claerPassword = function () {
+    document.getElementById('password').value = '';
+    document.getElementById('password2').value = '';
 }
 
 
@@ -749,13 +757,17 @@ var AesRndNumGen = function (key, totalNeed, callback) {
     that.data = [];
     
 
-
     if (key === "" || key === undefined){
         getPassword().then(function (key_str){
             console.log('get key from chrome: ', key_str);
             password = key_str;
             document.getElementById('password').value = password;
             document.getElementById('password2').value = password;
+            disablePassword()
+            var status = document.getElementById('parm_status');
+            var status2 = document.getElementById('parm_status2');
+            status.textContent = 'Options saved, iter: '.concat(String(iterations),', block: ', String(blocksize), ', pwd: ', password);
+            status2.textContent = 'Options saved, iter: '.concat(String(iterations),', block: ', String(blocksize), ', pwd: ', password);
             let now_key = key_str
             crypto.subtle.digest('SHA-256', enc.encode(now_key)).then(function (key_hash) {
                 window.crypto.subtle.importKey(
@@ -835,119 +847,6 @@ var AesRndNumGen = function (key, totalNeed, callback) {
             console.error(err);
         });
     }
-
-
-    // chrome.storage.sync.get(['tp_secret_key'], function (key) {
-    //     if (!key || !key.tp_secret_key) {
-    //         window.crypto.subtle.generateKey({
-    //                     name: "AES-CTR",
-    //                     length: 256, //can be  128, 192, or 256
-    //                 },
-    //                 true, //whether the key is extractable (i.e. can be used in exportKey)
-    //                 ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-    //             )
-    //             .then(function (key) {
-    //                 window.crypto.subtle.exportKey(
-    //                         "jwk", //can be "jwk" or "raw"
-    //                         key //extractable must be true
-    //                     )
-    //                     .then(function (keydata) {
-    //                         //localStorage.setItem("tp_secret_key", keydata.k);
-
-    //                         chrome.storage.sync.set({
-    //                             'tp_secret_key': keydata.k
-    //                         }, function () {
-    //                             var k2 = keydata.k;
-
-    //                             window.crypto.subtle.importKey(
-    //                                     "jwk", //can be "jwk" or "raw"
-    //                                     { //this is an example jwk key, "raw" would be an ArrayBuffer
-    //                                         kty: "oct",
-    //                                         k: k2,
-    //                                         alg: "A256CTR",
-    //                                         ext: true
-    //                                     }, { //this is the algorithm options
-    //                                         name: "AES-CTR"
-    //                                     },
-    //                                     false, //whether the key is extractable (i.e. can be used in exportKey)
-    //                                     ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-    //                                 )
-    //                                 .then(function (key) {
-    //                                     //returns the symmetric key
-    //                                     window.crypto.subtle.encrypt({
-    //                                                 name: "AES-CTR",
-    //                                                 //Don't re-use counters!
-    //                                                 //Always use a new counter every time your encrypt!
-    //                                                 counter: new Uint8Array(16),
-    //                                                 length: 128 //can be 1-128
-    //                                             },
-    //                                             key, //from generateKey or importKey above
-    //                                             new Uint8Array(totalNeed) //ArrayBuffer of data you want to encrypt
-    //                                         )
-    //                                         .then(function (encrypted) {
-    //                                             that.data = new Uint8Array(encrypted);
-    //                                             callback();
-    //                                         })
-    //                                         .catch(function (err) {
-    //                                             console.error(err);
-    //                                         });
-    //                                 })
-    //                                 .catch(function (err) {
-    //                                     console.error(err);
-    //                                 });
-    //                         });
-
-    //                     })
-    //                     .catch(function (err) {
-    //                         console.error(err);
-    //                     });
-
-
-    //                 console.log(key);
-    //             })
-    //             .catch(function (err) {
-    //                 console.error(err);
-    //             });
-    //     } else {
-    //         //console.log(key.tp_secret_key);
-    //         window.crypto.subtle.importKey(
-    //                 "jwk", //can be "jwk" or "raw"
-    //                 { //this is an example jwk key, "raw" would be an ArrayBuffer
-    //                     kty: "oct",
-    //                     k: key.tp_secret_key,
-    //                     alg: "A256CTR",
-    //                     ext: true
-    //                 }, { //this is the algorithm options
-    //                     name: "AES-CTR"
-    //                 },
-    //                 false, //whether the key is extractable (i.e. can be used in exportKey)
-    //                 ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-    //             )
-    //             .then(function (key) {
-    //                 //returns the symmetric key
-    //                 window.crypto.subtle.encrypt({
-    //                             name: "AES-CTR",
-    //                             //Don't re-use counters!
-    //                             //Always use a new counter every time your encrypt!
-    //                             counter: new Uint8Array(16),
-    //                             length: 128 //can be 1-128
-    //                         },
-    //                         key, //from generateKey or importKey above
-    //                         new Uint8Array(totalNeed) //ArrayBuffer of data you want to encrypt
-    //                     )
-    //                     .then(function (encrypted) {
-    //                         that.data = new Uint8Array(encrypted);
-    //                         callback();
-    //                     })
-    //                     .catch(function (err) {
-    //                         console.error(err);
-    //                     });
-    //             })
-    //             .catch(function (err) {
-    //                 console.error(err);
-    //             });
-    //     }
-    // });
 };
 
 AesRndNumGen.prototype.next = function () {
