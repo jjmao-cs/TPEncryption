@@ -1,3 +1,7 @@
+const imgur_id = 'dafa793ab43fba1'
+const imgur_secret = 'd05243f8b7bf442456377d84ce65c4943a904aa2'
+
+
 function changeTab(evt, cityName) {
     // Declare all variables
     var i, tabcontent, tablinks;
@@ -46,6 +50,72 @@ function changeTab3() {
 }
 
 
+var server = undefined;
+function setServer() {
+    let value = document.getElementById('SELECT_SERVER').options[document.getElementById('SELECT_SERVER').selectedIndex].value,
+     selected_server = document.getElementById('selected_server'),
+     selected_server2 = document.getElementById('selected_server2');
+    
+    document.getElementById("password").disabled = true;
+    document.getElementById('password').value = '';
+    document.getElementById("password2").disabled = true;
+    document.getElementById('password2').value = '';
+    // console.log(1)
+    
+    if (value === 'None') {
+        selected_server.innerHTML = 'None';
+        selected_server2.innerHTML = 'None';
+        server = undefined
+    } else if (value === 'Imgur') {
+        selected_server.innerHTML = 'Imgur (Anonymous)';
+        selected_server2.innerHTML = 'Imgur (Anonymous)';
+        document.getElementById("password").disabled = false;
+        document.getElementById("password2").disabled = false;
+        server = 'imgur'
+    } else if (value === 'Google') {
+        selected_server.innerHTML = 'Google Photo';
+        selected_server2.innerHTML = 'Google Photo';
+        server = 'google'
+    } else {
+        selected_server.innerHTML = 'Error';
+        selected_server2.innerHTML = 'Error';
+    }
+    document.getElementById('SELECT_SERVER2').selectedIndex = document.getElementById('SELECT_SERVER').selectedIndex;
+}
+
+function setServer2() {
+    let value2 = document.getElementById('SELECT_SERVER2').options[document.getElementById('SELECT_SERVER2').selectedIndex].value,
+     selected_server = document.getElementById('selected_server'),
+     selected_server2 = document.getElementById('selected_server2');
+    
+    document.getElementById("password").disabled = true;
+    document.getElementById('password').value = '';
+    document.getElementById("password2").disabled = true;
+    document.getElementById('password2').value = '';
+    // console.log(2)
+
+    if (value2 === 'None') {
+        selected_server.innerHTML = 'None';
+        selected_server2.innerHTML = 'None';
+        server = undefined
+    } else if (value2 === 'Imgur') {
+        selected_server.innerHTML = 'Imgur (Anonymous)';
+        selected_server2.innerHTML = 'Imgur (Anonymous)';
+        document.getElementById("password").disabled = false;
+        document.getElementById("password2").disabled = false;
+        server = 'imgur'
+    } else if (value2 === 'Google') {
+        selected_server.innerHTML = 'Google Photo';
+        selected_server2.innerHTML = 'Google Photo';
+        server = 'google'
+    } else {
+        selected_server.innerHTML = 'Error';
+        selected_server2.innerHTML = 'Error';
+    }
+    document.getElementById('SELECT_SERVER').selectedIndex = document.getElementById('SELECT_SERVER2').selectedIndex;
+}
+
+
 document.addEventListener('DOMContentLoaded', function () {
     // authentication
     document.getElementById('AUTH_LINK').addEventListener('click', changeTab1, false);
@@ -59,19 +129,62 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('DOWNLOAD_LINK').addEventListener('click', changeTab3, false);
     // decrypt and download
     document.getElementById('de_dl').addEventListener('click', decrypt, false);
+    // select upload server
+    document.getElementById('SELECT_SERVER').addEventListener('change', setServer, false);
+    document.getElementById('SELECT_SERVER2').addEventListener('change', setServer2, false);
+    // save options
+    document.getElementById('save').addEventListener('click', save_options);
+    document.getElementById('save2').addEventListener('click', save_options2);
+
 });
 
-var div, div2;
+
+var enc = new TextEncoder();
+var iterations;
+var blocksize;
+var password = "";
+function save_options() {
+    iterations = document.getElementById('iterations').value;
+    blocksize = document.getElementById('blocksize').value;
+    password = document.getElementById('password').value;
+
+    document.getElementById('iterations2').value = iterations;
+    document.getElementById('blocksize2').value = blocksize;
+    document.getElementById('password2').value = password;
+
+    //   // Update status to let user know options were saved.
+    var status = document.getElementById('parm_status');
+    var status2 = document.getElementById('parm_status2');
+    status.textContent = 'Options saved, iter: '.concat(String(iterations),', block: ', String(blocksize));
+    status2.textContent = 'Options saved, iter: '.concat(String(iterations),', block: ', String(blocksize));
+}
+
+function save_options2() {
+    iterations = document.getElementById('iterations2').value;
+    blocksize = document.getElementById('blocksize2').value;
+    password = document.getElementById('password2').value;
+
+    document.getElementById('iterations').value = iterations;
+    document.getElementById('blocksize').value = blocksize;
+    document.getElementById('password').value = password;
+
+    //   // Update status to let user know options were saved.
+    var status = document.getElementById('parm_status');
+    var status2 = document.getElementById('parm_status2');
+    status.textContent = 'Options saved, iter: '.concat(String(iterations),', block: ', String(blocksize));
+    status2.textContent = 'Options saved, iter: '.concat(String(iterations),', block: ', String(blocksize));
+}
 
 
 var browse = function () {
+    let div, div2;
     if (this.files && this.files[0]) {
         var FR = new FileReader();
         FR.onload = function (e) {
-            chrome.tabs.query({
-                active: true,
-                currentWindow: true
-            }, function (tabs) {
+            chrome.tabs.query({     // remove
+                active: true,       // remove
+                currentWindow: true     // remove
+            }, function (tabs) {        // remove
                 var img = new Image();
                 img.onload = function () {
                     div = document.getElementById("canvas");
@@ -86,26 +199,48 @@ var browse = function () {
                     console.log(img.height);
                 };
                 img.src = e.target.result;
-
-            });
+            });     // remove
         };
         FR.readAsDataURL(this.files[0]);
     }
 }
 
 
+var enablePassword = function (){
+    document.getElementById('password').disabled = false
+    document.getElementById('password2').disabled = false
+}
+
+
+var disablePassword = function (){
+    document.getElementById('password').disabled = true
+    document.getElementById('password2').disabled = true
+}
+
+
 var encrypt = function () {
-    setUploadStatus("Encrypting");
-    chrome.storage.sync.get(["iterations", "blocksize"], function (config) {
+    if(server === undefined){
+        alert('No server selected.')
+    } else {
+        setUploadStatus("Encrypting");
+        enablePassword()
+        let div = document.getElementById("canvas");
+        // chrome.storage.sync.get(["iterations", "blocksize"], function (config) {
         setTimeout(function () {
-            console.log(config);
-            var x = new TPEncryption(div, "Example128BitKey");
-            x.encrypt(config.iterations, config.blocksize, function (time) {
+            console.log(iterations, blocksize);
+            var x = new TPEncryption(div, password);
+            x.encrypt(iterations, blocksize, function (time) {
                 setUploadStat(time + "ms");
-                upload();
+                // upload();
+                if (server === 'imgur'){
+                    imgur_upload();
+                } else if (server === 'google'){
+                    upload();
+                }
             });
         }, 100);
-    });
+        // });
+    }
 }
 
 
@@ -133,6 +268,37 @@ var upload = function () {
         c.toBlob(function (blob) {
             sendImageBinary(token, blob)
         });
+    });
+}
+
+
+var imgur_upload = function () {
+    var c = document.getElementById("canvas");
+    setUploadStatus("uploading...");
+    c.toBlob(function (binaryData) {
+        
+        var data = new FormData();
+        data.append("image", binaryData);
+
+        var xhr = new XMLHttpRequest();
+        // xhr.withCredentials = true;
+
+        xhr.addEventListener("readystatechange", function() {
+            if(this.readyState === 4) {
+                
+                let r = JSON.parse(this.responseText);
+                let url = r['data']['link'];
+                console.log(r['data']['link']);
+                setUploadStatus('<a href="'+url+'">Imgur Photos</a>');
+                enablePassword()
+
+            }
+        });
+
+        xhr.open("POST", "https://api.imgur.com/3/image");
+        xhr.setRequestHeader("Authorization", "Client-ID ".concat(imgur_id));
+
+        xhr.send(data);
     });
 }
 
@@ -184,6 +350,7 @@ var sendMediaItemRequest = function (token, uploadToken) {
             var response = JSON.parse(that.response);
             var url = response.newMediaItemResults[0].mediaItem.productUrl;
             setUploadStatus('<a href="'+url+'">Google Photos</a>');
+            enablePassword()
         } else {
             setUploadStatus("Upload Failed at sendMediaItemRequest");
         }
@@ -193,30 +360,42 @@ var sendMediaItemRequest = function (token, uploadToken) {
 
 
 var decrypt = function () {
-    draw()
-    setDownloadStatus("decrypting...")
-    chrome.storage.sync.get(["iterations", "blocksize"], function (config) {
-        setTimeout(function () {
-            console.log(config);
-            var x = new TPEncryption(div, "Example128BitKey");
-            x.decrypt(config.iterations, config.blocksize, function (time) {
+    draw().then(function(success){
+        if (success === true){
+            disablePassword()
+            let div = document.getElementById("canvas_dl");
+            setDownloadStatus("decrypting...")
+            console.log('pass drawing')
+            console.log(iterations, blocksize);
+            let x = new TPEncryption(div, password);
+            x.decrypt(iterations, blocksize, function (time) {
                 setDownloadStat(time + "ms");
                 download();
-            });
-        }, 100);
+            }); 
+        } else {
+            console.log('error: drawing fail');
+        }
+    }).catch(function (err) {
+        console.error(err);
     });
 };
 
 
+
 var draw = function () {
-    var img = new Image();
-    img.onload = function () {
-        div = document.getElementById("canvas_dl");
-        div.width = img.width;
-        div.height = img.height;
-        div.getContext("2d").drawImage(img, 0, 0, div.width, div.height);
-    };
-    img.src = document.getElementById("img_url").value;
+    console.log('drawing...');
+    return new Promise( function (resolve, reject){
+        let img = new Image();
+        img.crossOrigin = "anonymous"
+        img.onload = function () {
+            let div = document.getElementById("canvas_dl");
+            div.width = img.width;
+            div.height = img.height;
+            div.getContext("2d").drawImage(img, 0, 0, div.width, div.height);
+            resolve(true);
+        };
+        img.src = document.getElementById("img_url").value;
+    });
 }
 
 
@@ -244,6 +423,7 @@ var download = function () {
     setDownloadStatus("Downloading...")
     downloadLink.click();
     setDownloadStatus("Done!");
+    enablePassword()
 };
 
 
@@ -255,7 +435,7 @@ var TPEncryption = function (canvasId, key) {
     that.mat_b = [];
 
     that.canvasId = canvasId;
-    that.key = undefined;
+    that.key = key;
 
     var c = canvasId;
 
@@ -265,6 +445,7 @@ var TPEncryption = function (canvasId, key) {
     that.block_size = 0;
 
     var ctx = c.getContext("2d");
+    ctx.crossOrigin = "anonymous"
     that.canvasImgData = ctx.getImageData(0, 0, c.width, c.height);
     console.log("TPE init FIN");
 };
@@ -337,6 +518,7 @@ TPEncryption.prototype.encrypt = function (num_of_iter, block_size, callback) {
             var timeOfEndOfAes = new Date().getTime();
             for (var ccc = 0; ccc < num_of_iter; ccc += 1) {
                 // substitution
+                console.log(sAesRndNumGen.ctr)
                 for (var i = 0; i < n; i += 1) {
                     for (var j = 0; j < m; j += 1) {
                         for (var k = 0; k < block_size * block_size - 1; k += 2) {
@@ -528,99 +710,64 @@ TPEncryption.prototype.decrypt = function (num_of_iter, block_size, callback) {
 };
 
 
+var getPassword = function () {
+    return new Promise ( function (resolve, reject){
+        chrome.storage.sync.get(['tp_secret_key'], function (key) {
+            if (!key || !key.tp_secret_key) {
+                window.crypto.subtle.generateKey({
+                            name: "AES-CTR",
+                            length: 256, //can be  128, 192, or 256
+                        },
+                        true, //whether the key is extractable (i.e. can be used in exportKey)
+                        ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
+                    )
+                    .then(function (key) {
+                        window.crypto.subtle.exportKey(
+                                "jwk", //can be "jwk" or "raw"
+                                key //extractable must be true
+                            )
+                            .then(function (keydata) {
+                                chrome.storage.sync.set({
+                                    'tp_secret_key': keydata.k
+                                }, function () {
+                                    resolve(keydata.k);
+                                });
+                            });
+                    });
+            } else {
+                resolve(key.tp_secret_key)
+            }
+
+        });
+    });
+}
+
 var AesRndNumGen = function (key, totalNeed, callback) {
     console.log("AES init");
     var that = this;
     that.ctr = 0;
     that.data = [];
-
-    chrome.storage.sync.get(['tp_secret_key'], function (key) {
-        if (!key || !key.tp_secret_key) {
-            window.crypto.subtle.generateKey({
-                        name: "AES-CTR",
-                        length: 256, //can be  128, 192, or 256
-                    },
-                    true, //whether the key is extractable (i.e. can be used in exportKey)
-                    ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-                )
-                .then(function (key) {
-                    window.crypto.subtle.exportKey(
-                            "jwk", //can be "jwk" or "raw"
-                            key //extractable must be true
-                        )
-                        .then(function (keydata) {
-                            //localStorage.setItem("tp_secret_key", keydata.k);
-
-                            chrome.storage.sync.set({
-                                'tp_secret_key': keydata.k
-                            }, function () {
-                                var k2 = keydata.k;
-
-                                window.crypto.subtle.importKey(
-                                        "jwk", //can be "jwk" or "raw"
-                                        { //this is an example jwk key, "raw" would be an ArrayBuffer
-                                            kty: "oct",
-                                            k: k2,
-                                            alg: "A256CTR",
-                                            ext: true
-                                        }, { //this is the algorithm options
-                                            name: "AES-CTR"
-                                        },
-                                        false, //whether the key is extractable (i.e. can be used in exportKey)
-                                        ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
-                                    )
-                                    .then(function (key) {
-                                        //returns the symmetric key
-                                        window.crypto.subtle.encrypt({
-                                                    name: "AES-CTR",
-                                                    //Don't re-use counters!
-                                                    //Always use a new counter every time your encrypt!
-                                                    counter: new Uint8Array(16),
-                                                    length: 128 //can be 1-128
-                                                },
-                                                key, //from generateKey or importKey above
-                                                new Uint8Array(totalNeed) //ArrayBuffer of data you want to encrypt
-                                            )
-                                            .then(function (encrypted) {
-                                                that.data = new Uint8Array(encrypted);
-                                                callback();
-                                            })
-                                            .catch(function (err) {
-                                                console.error(err);
-                                            });
-                                    })
-                                    .catch(function (err) {
-                                        console.error(err);
-                                    });
-                            });
-
-                        })
-                        .catch(function (err) {
-                            console.error(err);
-                        });
+    
 
 
-                    console.log(key);
-                })
-                .catch(function (err) {
-                    console.error(err);
-                });
-        } else {
-            //console.log(key.tp_secret_key);
-            window.crypto.subtle.importKey(
-                    "jwk", //can be "jwk" or "raw"
-                    { //this is an example jwk key, "raw" would be an ArrayBuffer
-                        kty: "oct",
-                        k: key.tp_secret_key,
-                        alg: "A256CTR",
-                        ext: true
-                    }, { //this is the algorithm options
+    if (key === "" || key === undefined){
+        getPassword().then(function (key_str){
+            console.log('get key from chrome: ', key_str);
+            password = key_str;
+            document.getElementById('password').value = password;
+            document.getElementById('password2').value = password;
+            let now_key = key_str
+            crypto.subtle.digest('SHA-256', enc.encode(now_key)).then(function (key_hash) {
+                window.crypto.subtle.importKey(
+                    "raw", //can be "jwk" or "raw"
+                    key_hash,
+                    { //this is the algorithm options
                         name: "AES-CTR"
                     },
                     false, //whether the key is extractable (i.e. can be used in exportKey)
                     ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
                 )
-                .then(function (key) {
+                .then(function (inside_key) {
                     //returns the symmetric key
                     window.crypto.subtle.encrypt({
                                 name: "AES-CTR",
@@ -629,7 +776,7 @@ var AesRndNumGen = function (key, totalNeed, callback) {
                                 counter: new Uint8Array(16),
                                 length: 128 //can be 1-128
                             },
-                            key, //from generateKey or importKey above
+                            inside_key, //from generateKey or importKey above
                             new Uint8Array(totalNeed) //ArrayBuffer of data you want to encrypt
                         )
                         .then(function (encrypted) {
@@ -643,8 +790,164 @@ var AesRndNumGen = function (key, totalNeed, callback) {
                 .catch(function (err) {
                     console.error(err);
                 });
-        }
-    });
+            }).catch(function (err) {
+                console.error(err);
+            });
+        }).catch(function (err) {
+            console.error(err);
+        });
+    } else {
+        let now_key = key
+        console.log('read key: ', now_key);
+        crypto.subtle.digest('SHA-256', enc.encode(now_key)).then(function (key_hash) {
+            // console.log('key_has: ', key_hash)
+            window.crypto.subtle.importKey(
+                    "raw", //can be "jwk" or "raw"
+                    key_hash,
+                    { //this is the algorithm options
+                        name: "AES-CTR"
+                    },
+                    false, //whether the key is extractable (i.e. can be used in exportKey)
+                    ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
+            ).then(function (inside_key) {
+                //returns the symmetric key
+                window.crypto.subtle.encrypt({
+                            name: "AES-CTR",
+                            //Don't re-use counters!
+                            //Always use a new counter every time your encrypt!
+                            counter: new Uint8Array(16),
+                            length: 128 //can be 1-128
+                        },
+                        inside_key, //from generateKey or importKey above
+                        new Uint8Array(totalNeed) //ArrayBuffer of data you want to encrypt
+                ).then(function (encrypted) {
+                    that.data = new Uint8Array(encrypted);
+                    callback();
+                })
+                .catch(function (err) {
+                    console.error(err);
+                });
+            })
+            .catch(function (err) {
+                console.error(err);
+            });
+        }).catch(function (err) {
+            console.error(err);
+        });
+    }
+
+
+    // chrome.storage.sync.get(['tp_secret_key'], function (key) {
+    //     if (!key || !key.tp_secret_key) {
+    //         window.crypto.subtle.generateKey({
+    //                     name: "AES-CTR",
+    //                     length: 256, //can be  128, 192, or 256
+    //                 },
+    //                 true, //whether the key is extractable (i.e. can be used in exportKey)
+    //                 ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
+    //             )
+    //             .then(function (key) {
+    //                 window.crypto.subtle.exportKey(
+    //                         "jwk", //can be "jwk" or "raw"
+    //                         key //extractable must be true
+    //                     )
+    //                     .then(function (keydata) {
+    //                         //localStorage.setItem("tp_secret_key", keydata.k);
+
+    //                         chrome.storage.sync.set({
+    //                             'tp_secret_key': keydata.k
+    //                         }, function () {
+    //                             var k2 = keydata.k;
+
+    //                             window.crypto.subtle.importKey(
+    //                                     "jwk", //can be "jwk" or "raw"
+    //                                     { //this is an example jwk key, "raw" would be an ArrayBuffer
+    //                                         kty: "oct",
+    //                                         k: k2,
+    //                                         alg: "A256CTR",
+    //                                         ext: true
+    //                                     }, { //this is the algorithm options
+    //                                         name: "AES-CTR"
+    //                                     },
+    //                                     false, //whether the key is extractable (i.e. can be used in exportKey)
+    //                                     ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
+    //                                 )
+    //                                 .then(function (key) {
+    //                                     //returns the symmetric key
+    //                                     window.crypto.subtle.encrypt({
+    //                                                 name: "AES-CTR",
+    //                                                 //Don't re-use counters!
+    //                                                 //Always use a new counter every time your encrypt!
+    //                                                 counter: new Uint8Array(16),
+    //                                                 length: 128 //can be 1-128
+    //                                             },
+    //                                             key, //from generateKey or importKey above
+    //                                             new Uint8Array(totalNeed) //ArrayBuffer of data you want to encrypt
+    //                                         )
+    //                                         .then(function (encrypted) {
+    //                                             that.data = new Uint8Array(encrypted);
+    //                                             callback();
+    //                                         })
+    //                                         .catch(function (err) {
+    //                                             console.error(err);
+    //                                         });
+    //                                 })
+    //                                 .catch(function (err) {
+    //                                     console.error(err);
+    //                                 });
+    //                         });
+
+    //                     })
+    //                     .catch(function (err) {
+    //                         console.error(err);
+    //                     });
+
+
+    //                 console.log(key);
+    //             })
+    //             .catch(function (err) {
+    //                 console.error(err);
+    //             });
+    //     } else {
+    //         //console.log(key.tp_secret_key);
+    //         window.crypto.subtle.importKey(
+    //                 "jwk", //can be "jwk" or "raw"
+    //                 { //this is an example jwk key, "raw" would be an ArrayBuffer
+    //                     kty: "oct",
+    //                     k: key.tp_secret_key,
+    //                     alg: "A256CTR",
+    //                     ext: true
+    //                 }, { //this is the algorithm options
+    //                     name: "AES-CTR"
+    //                 },
+    //                 false, //whether the key is extractable (i.e. can be used in exportKey)
+    //                 ["encrypt", "decrypt"] //can "encrypt", "decrypt", "wrapKey", or "unwrapKey"
+    //             )
+    //             .then(function (key) {
+    //                 //returns the symmetric key
+    //                 window.crypto.subtle.encrypt({
+    //                             name: "AES-CTR",
+    //                             //Don't re-use counters!
+    //                             //Always use a new counter every time your encrypt!
+    //                             counter: new Uint8Array(16),
+    //                             length: 128 //can be 1-128
+    //                         },
+    //                         key, //from generateKey or importKey above
+    //                         new Uint8Array(totalNeed) //ArrayBuffer of data you want to encrypt
+    //                     )
+    //                     .then(function (encrypted) {
+    //                         that.data = new Uint8Array(encrypted);
+    //                         callback();
+    //                     })
+    //                     .catch(function (err) {
+    //                         console.error(err);
+    //                     });
+    //             })
+    //             .catch(function (err) {
+    //                 console.error(err);
+    //             });
+    //     }
+    // });
 };
 
 AesRndNumGen.prototype.next = function () {

@@ -3,7 +3,10 @@
 
 <head>
     <title>TPEncryption Plugin</title>
-    <style type="text/css">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet"  href="tab.css">
+
+    <!-- <style type="text/css">
         body {
             margin: 0;
             padding: 0;
@@ -62,10 +65,10 @@
             max-height: 400px;
             overflow: scroll;
         }
-    </style>
+    </style> -->
 </head>
 
-<body style="width: 480px;height: 400px;">
+<body style="width: 700px;height: 600px;">
 
 
     <ul class="tab">
@@ -87,16 +90,48 @@
 
     <div id="UPLOAD" class="tabcontent">
         <h3>Encrypt & Upload</h3>
-        <p>Encrypt an image and upload it to Google Photos.</p>
-        <input type="file" id="browse" value="Browse an image" accept="image/*" style="border: 0px solid;outline: none;width: 35%;margin-bottom: 10px;"
-        />
+        <h4>Destinstion Select</h4>
+
+        <ul id="settings">
+            <li>
+                <div>
+                <select name="" id="SELECT_SERVER" class="form-control">
+                    <option value="None">-- please choose server --</option>
+                    <option value="Imgur">Imgur</option>
+                    <option value="Google">Google Photo</option>
+                </select>
+                </div>
+                <br/>
+            </li>
+            <li>
+                Iterations: <input type="number" id="iterations" min="1" max="100" />
+            </li>
+            <li>
+                Blocksize: <input type="number" id="blocksize" min="8" max="64" />
+            </li>
+            <li>
+                Password(option): <input disabled type="text" id="password"/>
+            </li>
+            <li>
+                <button id="save">Save</button>
+                <br/>
+            </li>
+        </ul>
+        <h4>Image Select</h4>
+        <ul>
+            <input type="file" id="browse" value="Browse an image" accept="image/*" />
+        </ul>
         <span style="display: inline-block;margin-left: 10px;color:green;" id="upload_status"></span>
         <span style="display: inline-block;margin-left: 10px;color:green;" id="upload_stat"></span>
-        <br style="margin-bottom: 50px;" />
-        <input type="button" id="en_up" value="Encrypt & Upload" style="width: 40%;border-radius: 0px;" />
-        <br/>
-        <br/>
-        <br/>
+        <!-- <br style="margin-bottom: 50px;" />
+        <input type="button" id="en_up" value="Encrypt & Upload" style="width: 40%;" /> -->
+        <h4>Current settings:</h4>
+        <ul id="settings">
+        <li id="selected_server" >None</li>
+        <li id="parm_status" >None</li>
+        </ul>
+        <input type="button" id="en_up" value="Encrypt & Upload" style="width: 20%;" />
+        <br/><br/><br/>
         <canvas id="canvas" width="200" height="200" style="border: 1px solid gray; margin: 0 0 0 10px;width: 40%"></canvas>
         <canvas id="canvas_thumb" width="200" height="200" style="border: 1px solid gray; margin: 0 0 0 10px;width: 40%;vertical-align: top;"></canvas>
     </div>
@@ -105,13 +140,42 @@
         <h3>Decrypt & Download</h3>
         <p>Decrypt and download your image.</p>
         <!-- <select id="downloadable_images" style="width: 30%;"></select> -->
-        <input type="text" id="img_url" placeholder="image url" style="width: 60%;border-radius: 0px;" />
+        <input type="text" id="img_url" placeholder="image url" style="width: 60%;" />
         <span style="display: inline-block;margin-left: 10px;color:green;" id="download_status"></span>
         <span style="display: inline-block;margin-left: 10px;color:green;" id="download_stat"></span>
         <br/>
+        <ul id="settings">
+            <li>
+                <div>
+                <select name="" id="SELECT_SERVER2" class="form-control">
+                    <option value="None">-- please choose server --</option>
+                    <option value="Imgur">Imgur</option>
+                    <option value="Google">Google Photo</option>
+                </select>
+                </div>
+                <br/>
+            </li>
+            <li>
+                Iterations: <input type="number" id="iterations2" min="1" max="100" />
+            </li>
+            <li>
+                Blocksize: <input type="number" id="blocksize2" min="8" max="64" />
+            </li>
+            <li>
+                Password(option): <input disabled type="text" id="password2"/>
+            </li>
+            <li>
+                <button id="save2">Save</button>
+            </li>
+        </ul>
         <br/>
-        <a href="#" type="button" id="de_dl" value="Decrypt & Download" style="width: 40%;border-radius: 0px;margin-left:10px;">Decrypt & Download</a>
-        <a href="#" type="button" id="dl_link" value="" style="width: 40%;border-radius: 0px;margin-left:10px;"></a>
+        <h4 id="">Current settings: </h4>
+        <ul id="settings">
+            <li id="selected_server2" >None</li>
+            <li id="parm_status2" >None</li>
+        </ul>
+        <a href="#" type="button" id="de_dl" value="Decrypt & Download" style="width: 40%;margin-left:10px;">Decrypt & Download</a>
+        <a href="#" type="button" id="dl_link" value="" style="width: 40%;margin-left:10px;"></a>
         <br/>
         <br/>
         <br/>
